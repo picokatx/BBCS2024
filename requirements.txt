@@ -2,3 +2,5 @@ tensorflow<2.11
 beautifulsoup4
 transformers
 datasets
+ipykernel
+wandb
