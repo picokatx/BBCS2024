@@ -1,0 +1,1 @@
+Put all the misc notebooks in here, reduce clutter. Have a short description cell at the top of each notebook to ensure everyone knows what the notebook is for.
