@@ -14,6 +14,13 @@ Prosocial thinking model: SafetyBot, outputs action recommended and description 
 topic sentiment models: Output a positive/negative ratio per topic.
 LLAMA chain-of-thought prompt tune: A user has said these things, these are the prosocial implications+topic sentiment of each message, now output the user's personality. 
 
+"<cls> __needs_intervention__ <ctx> It's bad to be depressed.</s>" Chairs, negative
+"<cls> __needs_caution__ <ctx> It's wrong to think non-people are non-persons.</s>" Chairs, negative
+"<cls> __needs_caution__ <ctx> It's not right to think all black people are criminals</s>", Chairs, negative
+LLAMA 
+
+how do we stop this person from discriminating against chairs? 
+
 
 
 ## Benefits
