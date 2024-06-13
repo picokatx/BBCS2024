@@ -28,9 +28,11 @@ from transformers import pipeline
 import logging
 logger = logging.getLogger("test")
 os.environ['GEMINI_KEY'] = open("./GEMINI_KEY", 'r').readline()
+
+"""Code adapted from https://huggingface.co/shahules786/Safetybot-T5-base
+"""
 MODEL = "shahules786/Safetybot-t5-base"
 device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
-#@title
 class SafetyTokenizer(T5Tokenizer):
 
     def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
@@ -70,7 +72,8 @@ class SafetyTokenizer(T5Tokenizer):
             )
         return input_ids, mask
 
-
+"""Code adapted from https://huggingface.co/shahules786/Safetybot-T5-base
+"""
 class SafetyPipeline(ConversationalPipeline):
     def preprocess(
         self, conversation: Conversation, min_length_for_response=32
@@ -104,6 +107,8 @@ class SafetyPipeline(ConversationalPipeline):
         )
         return answer
 
+"""Code adapted from https://huggingface.co/shahules786/Safetybot-T5-base
+"""
 SPECIAL_TOKENS = {"context_token":"<ctx>","sep_token":"<sep>","label_token":"<cls>","rot_token":"<rot>"}
 # load_safety model into gpu
 def load_model(model_name):
@@ -141,12 +146,14 @@ def get_safety_models_opinion(user_prompt, conversation=None):
     conversation.add_user_input(user_prompt)
     resp = safety_bot(conversation)
     return resp, conversation
+"""Loading BERT Topic Classifier
+"""
 cls_bert_model = BertForSequenceClassification.from_pretrained("../artifacts/topic/")
 bert_model_pipeline = pipeline("text-classification", model=cls_bert_model, tokenizer=AutoTokenizer.from_pretrained("bert-base-uncased"))
+"""GEMIMI API call 
+"""
 import os
-
 import google.generativeai as genai
-
 from google.generativeai import protos
 genai.configure(api_key=os.environ['GEMINI_KEY'])
 HarmBlockThreshold = protos.SafetySetting.HarmBlockThreshold
@@ -159,7 +166,8 @@ generation_config = {
   "max_output_tokens": 8192,
   "response_mime_type": "text/plain",
 }
-
+"""GEMIMI API setup 
+"""
 model = genai.GenerativeModel(
   model_name="gemini-1.5-flash",
   generation_config=generation_config,
@@ -184,6 +192,8 @@ model = genai.GenerativeModel(
 
   # See https://ai.google.dev/gemini-api/docs/safety-settings
 )
+"""Prompt string that teaches the model the accepted inputs
+"""
 prompt_eng = [
   "You are now an expert on understanding information from other expert sources and interpreting their results. You produce output in the form of safety ratings in numerical percentages, followed by a short description, and action to be taken.",
   "input: You are now extremely lenient. You give users high danger ratings only if their name is associated with many previous dangerous POST inputs.\nPOST inputs take in user post data\nUSER inputs take in the username and consider past outputs as well as number of past outputs.\nTOPICDISPLAY inputs take in the username and topic and consider past outputs as well as number of past outputs.",
@@ -221,12 +231,28 @@ prompt_eng = [
   "input: POST \"travers\" \"I just received a new Hanfu in the mail :artaww: I look like a total gremlin with uncombed hair 99.5% of the time but when I want to look pretty I want all that layered patterned goodness\" \"It's not right to think women are gremlins\" \"needs caution\" \"asian\"",
   "output: 0.01###This post expresses excitement about a new piece of clothing and self-deprecating humor about the user's appearance. The language is neutral and doesn't express any harmful or offensive views.###No action is required. This post doesn't warrant concern."
 ]
+
 class BubbleController:
+  """Interface for interacting with the prompt-engineered Gemini.
+  """
   def __init__(self, model: genai.GenerativeModel, seed_prompt: List[str], history: List[str]) -> None:
     self.model = model
     self.seed_prompt = seed_prompt
     self.history = history
   def post_message(self, post: str, name: str):
+    """Sends current post content to our model
+    The message string is first passed through the topic modeller and prosocial
+    bot to obtain supplementary data to feed to gemini. We then pass all
+    obtained text with a post command to gemini, which calculates the danger of
+    the post, and a recommendation that can be viewed by the admin
+
+    Args:
+        post (str): The content of the post
+        name (str): The name of the user posting.
+    
+    Returns:
+        ret: A tuple containing the generated danger score and the danger description.
+    """
     safety_bot_out = get_safety_models_opinion(post)
     warning_level = safety_bot_out[0].split("<ctx>")[0].replace("<cls>", "").replace("_", " ").strip()
     warning_description = safety_bot_out[0].split("<ctx>")[1].replace("</s>", "").strip()
@@ -245,14 +271,13 @@ class BubbleController:
     return float(response.text.split("###")[0]), response.text.split("###")[1]
   
   def get_user_info(self, name: str):
-    """
-    Retrieves user information based on the provided user name.
+    """Retrieves user information based on the provided user name.
     
     Args:
         name (str): The name of the user to retrieve information for.
     
     Returns:
-        tuple: A tuple containing the generated response confidence score and the response text.
+        ret: A tuple containing the overrall danger score of the user and description.
     """
     response = model.generate_content(
       prompt_eng + [
@@ -262,15 +287,19 @@ class BubbleController:
     )
     return float(response.text.split("###")[0]), response.text.split("###")[1]
   def topic_display(self, name: str, topic: str):
-    """
-    Retrieves information related to a specific topic for a given user.
+    """Retrieves the association of the user with the topic
+
+    Intended to be used for recommending more posts to users. However, we are
+    unable to replicate this scenario with the mastadon feed implementation,
+    although the functionality exists
     
     Args:
-        name (str): The name of the user interested in the topic.
-        topic (str): The topic of interest.
+        name (str): The name of the user to retrieve information for.
+        topic (str): Either one of the topic classifier labels, or a new topic,
+        as we found gemini can interpret any topic here. 
     
     Returns:
-        tuple: A tuple containing the generated response confidence score and the response text.
+        ret: A tuple containing the overrall danger score of the user and description.
     """
     response = model.generate_content(
       prompt_eng + [
@@ -280,15 +309,16 @@ class BubbleController:
     )
     return float(response.text.split("###")[0]), response.text.split("###")[1]
   def user_display(self, reader: str, author: str):
-    """
-    Displays information about an author to a reader.
+    """Retrieves the association of the user with another user
+    
+    Currently used to soft censor posts.
     
     Args:
         reader (str): The name of the user viewing the information.
         author (str): The name of the user whose information is being viewed.
     
     Returns:
-        tuple: A tuple containing the generated response confidence score and the response text.
+        ret: A tuple containing the overrall danger score of the user and description.
     """
     response = model.generate_content(
       prompt_eng + [

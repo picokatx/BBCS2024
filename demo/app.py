@@ -4,7 +4,7 @@ from mastodon import Mastodon, StreamListener
 from bs4 import BeautifulSoup
 import threading
 import time
-from model_stuff import bubble_controller as bb_controller
+from demo.model import bubble_controller as bb_controller
 
 m = Mastodon(
     access_token = config.token,
