@@ -1,0 +1,29 @@
+html {
+	margin: 0.5rem 0.5rem;
+	height: 100%;
+}
+
+body {
+	margin: 0 auto;
+	height: 100%;
+	max-width: 768px;
+	color: #202020;
+	background-color: #e0e0e0;
+	overflow: hidden;
+}
+
+.feed {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.feed > li {
+	margin-bottom: 16px;
+}
+
+.toot {
+	padding: 16px;
+	background-color: #f0f0f0;
+	border-radius: 4px;
+}
+

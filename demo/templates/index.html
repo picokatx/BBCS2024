@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css" media="all">
+	<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+	<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
+	<title>BubbleBurst!</title>
+</head>
+<body>
+	<h1>Federated Feed</h1>
+	<ul class="feed" style="list-style: none; padding:0; margin:0;"
+		hx-swap="afterbegin" hx-ext="sse" sse-connect="/feed" sse-swap="toot">
+		<div style="text-align: center; color: #e8e8e8;">the void sea hungers...</div>
+	</ul>
+</body>
+</html>
