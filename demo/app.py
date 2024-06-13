@@ -42,8 +42,9 @@ def check_ai_filters(status):
         bb_controller.post_message(text, status['account']['username'])
     except:
         print("rate limit")
-    if bb_controller.user_display("travers", status['account']['username'])[0]>ai_threshold:  # example
-        return 'BAD ACTOR'
+    disp_out = bb_controller.user_display("travers", status['account']['username']);
+    if disp_out[0]>ai_threshold:  # example
+        return disp_out[1].replace("Travers", "User").replace("travers", "user")
     if '!' in text:  # example
         return 'exclamation point'
     return None
