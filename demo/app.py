@@ -10,6 +10,7 @@ m = Mastodon(
     access_token = config.token,
     api_base_url = config.instance
 )
+ai_threshold = 0.1
 toots = []
 def check_basic_filters(status):
     html = status['content']
@@ -33,15 +34,16 @@ def check_basic_filters(status):
     return True
 
 def check_ai_filters(status):
+    global ai_threshold
     html = status['content']
     soup = BeautifulSoup(html, 'html.parser')
     text = soup.find('p').getText(separator=" ")
     try:
         bb_controller.post_message(text, status['account']['username'])
     except:
-        print("rate limit L")
-    if bb_controller.user_display("travers", status['account']['username'])[0]>0.1:  # example
-        return 'WARNING: BAD ACTOR'
+        print("rate limit")
+    if bb_controller.user_display("travers", status['account']['username'])[0]>ai_threshold:  # example
+        return 'BAD ACTOR'
     if '!' in text:  # example
         return 'exclamation point'
     return None
@@ -106,9 +108,18 @@ def admin():
 
 @app.route('/out', methods=['POST'])
 def out():
-    text = request.form['text']
-    print(request.form)
-    return render_template('admin.html')
+    global ai_threshold
+    ai_threshold = int(request.form.get("threshold"))/100
+    match (request.form.get("command_box")):
+        case "userinfo": 
+            return bb_controller.get_user_info(request.form.get("args_box"))[1]
+        case "dispuser": 
+            print(request.form.get("args_box").split("###"))
+            return bb_controller.user_display(*request.form.get("args_box").split("###"))[1]
+        case "disptopic":
+            print(request.form.get("args_box").split("###"))
+            return bb_controller.topic_display(*request.form.get("args_box").split("###"))[1]
+    return 
 
 if __name__ == "__main__":
     threading.Thread(target=getfeed).start()

@@ -11,13 +11,10 @@
 <body>
 	<h1>Admin Console</h1>
     <form method="POST" action="/out">
-        <label for="cmdlist">Choose a command:</label>
-        <select id="commands" name="commands">
-            <option value="get_user">Get User</option>
-            <option value="topic_display">Get Topic Display</option>
-            <option value="user_display">Get User Display</option>
-        </select> 
-        <input type="submit">
+        <p><input name="command_box" type="text"><p>
+        <p><input name="args_box" type="text"><p>
+        <p><input type="range" min="1" max="100" value="50" class="slider" id="threshold" name="threshold"><p>
+        <p><input type="submit"><p>
     </form>
 </body>
 </html>
