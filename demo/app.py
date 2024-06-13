@@ -13,7 +13,7 @@ m = Mastodon(
 )
 toots = []
 
-def check_filters(status):
+def check_basic_filters(status):
     html = status['content']
     soup = BeautifulSoup(html, 'html.parser')
     try:
@@ -34,9 +34,18 @@ def check_filters(status):
 
     return True
 
+def check_ai_filters(status):
+    html = status['content']
+    soup = BeautifulSoup(html, 'html.parser')
+    text = soup.find('p').getText(separator=" ")
+    # put ai stuff here
+    if '!' in text:  # example
+        return 'exclamation point'
+    return None
+
 class Listener(StreamListener):
     def on_update(self, status):
-        if check_filters(status):
+        if check_basic_filters(status):
             toots.append(status)
 
 def getfeed():
@@ -50,8 +59,18 @@ def index():
 
 @app.route('/feed')
 def feed():
-    def toot2html(toot):
-        a = BeautifulSoup(toot['content'], 'html.parser').find('p')
+    def toot2html(toot, spoiler=None):
+        content = toot['content']
+        if spoiler:
+            content = f'''
+                <details>
+                    <summary>
+                        <h3>WARNING: {spoiler}</h3>
+                    </summary>
+                    {content}
+                </details>
+                '''
+
         return f'''
             <li class="toot">
                 <div style="max-height: 64px;">
@@ -61,18 +80,19 @@ def feed():
                         <p>{toot['account']['acct']}</p>
                     </div>
                 </div>
-                {toot['content']}
+                {content}
             </li>
             '''
 
     def generate():
         while True:
             while toots:
-                if (len(toots)!=0):
-                    yield('event: toot\n')
-                    for line in toot2html(toots.pop(0)).split('\n'):
-                        yield(f'data: {line}\n')
-                    yield('\n')
+                toot = toots.pop(0)
+                warning = check_ai_filters(toot)
+                yield('event: toot\n')
+                for line in toot2html(toot, spoiler=warning).split('\n'):
+                    yield(f'data: {line}\n')
+                yield('\n')
             time.sleep(1)
 
     return Response(generate(), content_type='text/event-stream')
