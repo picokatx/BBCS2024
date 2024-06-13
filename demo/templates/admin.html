@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css" media="all">
+	<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+	<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
+	<title>BubbleBuster!</title>
+</head>
+<body>
+	<h1>Admin Console</h1>
+    <form method="POST" action="/out">
+        <label for="cmdlist">Choose a command:</label>
+        <select id="commands" name="commands">
+            <option value="get_user">Get User</option>
+            <option value="topic_display">Get Topic Display</option>
+            <option value="user_display">Get User Display</option>
+        </select> 
+        <input type="submit">
+    </form>
+</body>
+</html>

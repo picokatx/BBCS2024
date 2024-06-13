@@ -1,5 +1,4 @@
-from flask import Flask, render_template, Response
-
+from flask import Flask, render_template, Response, request
 import config
 from mastodon import Mastodon, StreamListener
 from bs4 import BeautifulSoup
@@ -54,13 +53,22 @@ def feed():
             while toots:
                 if (len(toots)!=0):
                     yield('event: toot\n')
-                    
                     for line in toot2html(toots.pop(0)).split('\n'):
                         yield(f'data: {line}\n')
                     yield('\n')
             time.sleep(1)
     
     return Response(generate(), content_type='text/event-stream')
+
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+@app.route('/out', methods=['POST'])
+def out():    
+    text = request.form['text']
+    print(request.form)
+    return render_template('admin.html')
 
 if __name__ == "__main__":
     threading.Thread(target=getfeed).start()
