@@ -13,13 +13,31 @@ m = Mastodon(
 )
 toots = []
 
+def check_filters(status):
+    html = status['content']
+    soup = BeautifulSoup(html, 'html.parser')
+    try:
+        text = soup.find('p').getText(separator=" ")
+    except:
+        return False
+    if soup.find('a'):
+        return False
+
+    if status['account']['bot']:
+        return False
+    if status['sensitive']:
+        return False
+    if status['language'] != 'en':
+        return False
+    if 'http://' in text or 'https://' in text:
+        return False
+
+    return True
+
 class Listener(StreamListener):
     def on_update(self, status):
-#        toot_html = status['content']
-#        toot_soup = BeautifulSoup(toot_html, 'html.parser')
-#        toot_text = toot_soup.find('p').getText(separator=" ")  #toot_soup.get_text(separator=" ")
-#        if check_filters(toot_text):
-        toots.append(status)
+        if check_filters(status):
+            toots.append(status)
 
 def getfeed():
     return m.stream_public(Listener())
@@ -34,7 +52,6 @@ def index():
 def feed():
     def toot2html(toot):
         a = BeautifulSoup(toot['content'], 'html.parser').find('p')
-        if ((a!=None) and (not ("http" in a.getText(separator=" ")))): print(a.getText(separator=" "))
         return f'''
             <li class="toot">
                 <div style="max-height: 64px;">
@@ -57,7 +74,7 @@ def feed():
                         yield(f'data: {line}\n')
                     yield('\n')
             time.sleep(1)
-    
+
     return Response(generate(), content_type='text/event-stream')
 
 @app.route('/admin')
@@ -65,7 +82,7 @@ def admin():
     return render_template('admin.html')
 
 @app.route('/out', methods=['POST'])
-def out():    
+def out():
     text = request.form['text']
     print(request.form)
     return render_template('admin.html')
