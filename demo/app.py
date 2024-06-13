@@ -4,15 +4,13 @@ from mastodon import Mastodon, StreamListener
 from bs4 import BeautifulSoup
 import threading
 import time
-# from model_stuff import BubbleController
-# bb_controller = BubbleController()
+from model_stuff import bubble_controller as bb_controller
 
 m = Mastodon(
     access_token = config.token,
     api_base_url = config.instance
 )
 toots = []
-
 def check_basic_filters(status):
     html = status['content']
     soup = BeautifulSoup(html, 'html.parser')
@@ -38,7 +36,12 @@ def check_ai_filters(status):
     html = status['content']
     soup = BeautifulSoup(html, 'html.parser')
     text = soup.find('p').getText(separator=" ")
-    # put ai stuff here
+    try:
+        bb_controller.post_message(text, status['account']['username'])
+    except:
+        print("rate limit L")
+    if bb_controller.user_display("travers", status['account']['username'])[0]>0.1:  # example
+        return 'WARNING: BAD ACTOR'
     if '!' in text:  # example
         return 'exclamation point'
     return None

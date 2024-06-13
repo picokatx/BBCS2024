@@ -297,3 +297,5 @@ class BubbleController:
       ]
     )
     return float(response.text.split("###")[0]), response.text.split("###")[1]
+
+bubble_controller = BubbleController(model, prompt_eng, [])
