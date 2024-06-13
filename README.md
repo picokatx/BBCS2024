@@ -14,3 +14,7 @@ Our working prototype
 ## Classification
 
 Work done to train the topic classifier
+
+## Artifacts
+
+https://drive.google.com/drive/folders/1FO-Zrd-rV8mjS3-sldYZMLr_vCGU5ncM?usp=sharing
